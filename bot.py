@@ -15,7 +15,7 @@ from projects import PROJECTS
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-# ---------------- CONFIG ----------------
+
 API_ID = int(os.getenv("API_ID", ""))
 API_HASH = os.getenv("API_HASH", "")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -27,12 +27,12 @@ STATUS_MESSAGE_ID = int(os.getenv("STATUS_MESSAGE_ID", ""))
 CHECK_INTERVAL_MINUTES = 60
 PAGE_SIZE = 10
 
-# ---------------- GLOBAL STATE ----------------
+
 HTTP_TIMEOUT = 10
 http_client = httpx.AsyncClient(timeout=HTTP_TIMEOUT)
 app = Client("render_manager_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# ---------------- HELPERS ----------------
+
 async def check_app_status(app_url: str) -> str:
     try:
         r = await http_client.get(app_url)
@@ -71,7 +71,7 @@ def build_status_page(project_names, statuses):
     footer = f"\n\nTotal projects: {total}"
     return header + body + footer
 
-# ---------------- CORE ----------------
+
 async def check_all_and_update_channel(send_notifications: bool = True):
     logging.info("Running periodic check_all_and_update_channel()")
     project_names = list(PROJECTS.keys())
@@ -88,7 +88,6 @@ async def check_all_and_update_channel(send_notifications: bool = True):
             redeploy_results[name] = result
             logging.warning(f"⚠️ {name} was Down — {result}")
 
-    # Update channel message
     text = build_status_page(project_names, statuses)
     try:
         await app.edit_message_text(
@@ -103,7 +102,7 @@ async def check_all_and_update_channel(send_notifications: bool = True):
 
     return statuses, redeploy_results
 
-# ---------------- SCHEDULER ----------------
+
 scheduler = AsyncIOScheduler()
 
 def start_scheduler(loop):
@@ -119,7 +118,7 @@ def start_scheduler(loop):
     scheduler.start()
     logging.info(f"✅ Scheduler started — checking every {CHECK_INTERVAL_MINUTES} minute(s).")
 
-# ---------------- STARTUP ----------------
+
 async def main():
     await app.start()
     logging.info("🤖 Bot started.")
@@ -127,7 +126,6 @@ async def main():
     loop = asyncio.get_running_loop()
     start_scheduler(loop)
 
-    # First check immediately
     await check_all_and_update_channel(send_notifications=False)
 
     logging.info("Entering idle loop...")
